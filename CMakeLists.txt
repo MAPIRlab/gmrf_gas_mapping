@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gmrf_mapping)
+project(gmrf_gas_mapping)
 
 find_package(catkin REQUIRED COMPONENTS 
   roscpp
@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 find_package(OpenCV REQUIRED)
-find_package(MRPT REQUIRED base obs maps slam)
 
 #generate_messages(
 #  DEPENDENCIES
@@ -35,12 +34,9 @@ find_package(MRPT REQUIRED base obs maps slam)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     DEPENDS eigen opencv2 libpcl-all-dev
-    CATKIN_DEPENDS cv_bridge roscpp pcl_ros mrpt_bridge
-    #INCLUDE_DIRS include
+    CATKIN_DEPENDS cv_bridge roscpp pcl_ros
     LIBRARIES ${PROJECT_NAME}
 )
-
-#find_package(OpenCV REQUIRED)
 
 
 FILE(GLOB_RECURSE MYFILES_CPP "src/*.cpp")
@@ -54,12 +50,11 @@ include_directories(
 )
 
 ## Declare a C++ executable
-add_executable(gmrf_node src/gmrf_node.cpp src/gmrf_map.cpp)
+add_executable(gmrf_gas_mapping_node src/gmrf_node.cpp src/gmrf_map.cpp)
 
 ## Specify libraries to link a library or executable target against
 link_directories(${catkin_LIBRARY_DIRS})
 
-target_link_libraries(gmrf_node
+target_link_libraries(gmrf_gas_mapping_node
    ${catkin_LIBRARIES}
-   ${MRPT_LIBS}
  )
