@@ -33,7 +33,7 @@ find_package(OpenCV REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    DEPENDS eigen opencv2 libpcl-all-dev
+    DEPENDS opencv2 libpcl-all-dev
     CATKIN_DEPENDS cv_bridge roscpp pcl_ros
     LIBRARIES ${PROJECT_NAME}
 )
