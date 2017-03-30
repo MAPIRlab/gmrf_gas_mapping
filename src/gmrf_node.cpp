@@ -188,18 +188,18 @@ int main(int argc, char **argv)
 		if (my_gmrf_map.module_init)
 		{
 			// Update and Publish maps
-			my_gmrf_map.my_map->updateMapEstimation_GMRF(my_gmrf_map.GMRF_lambdaObsLoss);
-			my_gmrf_map.publishMaps();
+            my_gmrf_map.my_map->updateMapEstimation_GMRF(my_gmrf_map.GMRF_lambdaObsLoss);
+            my_gmrf_map.publishMaps();
 			
 			// Info about actual rate
 			ROS_INFO("[gmrf] Updating every %f seconds. Intended preiod was %f", (ros::Time::now()-last_publication_time).toSec(), 1.0/my_gmrf_map.exec_freq);
 			last_publication_time = ros::Time::now();
 		}
-        	else
-        	{
+        else
+        {
 			ROS_INFO("[gmrf] Waiting for initialization (Map of environment).");
 		}
-        	loop_rate.sleep();
+        loop_rate.sleep();
 	}
 }
 
