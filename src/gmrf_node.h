@@ -69,6 +69,7 @@ public:
     //Node Params
     std::string                             sensor_topic;
     std::string                             frame_id;
+    std::string                             ocupancy_map;
     double                                  cell_size;
     double                                  exec_freq;
     std::string                             colormap;
