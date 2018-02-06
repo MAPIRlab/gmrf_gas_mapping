@@ -69,7 +69,7 @@ public:
     //Node Params
     std::string                             sensor_topic;
     std::string                             frame_id;
-    std::string                             ocupancy_map;
+    std::string                             occupancy_map;
     double                                  cell_size;
     double                                  exec_freq;
     std::string                             colormap;
@@ -99,7 +99,7 @@ protected:
     tf::TransformListener                   tf_listener; //Do not put inside the callback
 
     //Subscriptions & Publishers
-    ros::Subscriber sub_sensor, ocupancyMap_sub;
+    ros::Subscriber sub_sensor, occupancyMap_sub;
     ros::Publisher mean_advertise, var_advertise;
 
     //Callbacks
