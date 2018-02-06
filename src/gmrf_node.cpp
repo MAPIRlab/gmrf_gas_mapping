@@ -29,6 +29,7 @@ Cgmrf::Cgmrf()
     //------------------
     ros::NodeHandle param_n("~");
     param_n.param<std::string>("frame_id", frame_id, "/map");
+    param_n.param<std::string>("occupancy_map_topic", occupancy_map_topic, "/map");
     param_n.param<std::string>("sensor_topic", sensor_topic, "/Mox01/Sensor_reading");
     param_n.param<double>("exec_freq", exec_freq, 2.0 );
     param_n.param<double>("cell_size", cell_size, 0.5);
@@ -51,7 +52,7 @@ Cgmrf::Cgmrf()
     // Subscriptions
     //----------------------------------
     sub_sensor = param_n.subscribe(sensor_topic, 1, &Cgmrf::sensorCallback, this);
-    ocupancyMap_sub = param_n.subscribe("/map", 1, &Cgmrf::mapCallback, this);
+    occupancyMap_sub = param_n.subscribe(occupancy_map_topic, 1, &Cgmrf::mapCallback, this);
     //----------------------------------
     // Publishers
     //----------------------------------
