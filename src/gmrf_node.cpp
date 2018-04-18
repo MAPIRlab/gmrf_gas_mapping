@@ -31,6 +31,7 @@ Cgmrf::Cgmrf()
     param_n.param<std::string>("frame_id", frame_id, "/map");
     param_n.param<std::string>("occupancy_map_topic", occupancy_map_topic, "/map");
     param_n.param<std::string>("sensor_topic", sensor_topic, "/Mox01/Sensor_reading");
+    param_n.param<std::string>("output_csv_file", output_csv_file, "");
     param_n.param<double>("exec_freq", exec_freq, 2.0 );
     param_n.param<double>("cell_size", cell_size, 0.5);
 
@@ -38,13 +39,18 @@ Cgmrf::Cgmrf()
     param_n.param<double>("GMRF_lambdaObs", GMRF_lambdaObs, 10.0);       // [GMRF model] The initial information (Lambda) of each observation (this information will decrease with time)
     param_n.param<double>("GMRF_lambdaObsLoss", GMRF_lambdaObsLoss, 0.0);// [GMRF model] The loss of information (Lambda) of the observations with each iteration (see AppTick)
 
-
     param_n.param<std::string>("colormap", colormap, "jet");
     param_n.param<int>("max_pclpoints_cell", max_pclpoints_cell, 20);
     param_n.param<double>("min_sensor_val", min_sensor_val, 0.0);
     param_n.param<double>("max_sensor_val", max_sensor_val, 0.0);
 
     param_n.param<double>("suggest_next_location_sensor_th", suggest_next_location_sensor_th, 0.1);
+
+
+    ROS_DEBUG("[GMRF] frame_id: %s",  frame_id.c_str());
+    ROS_DEBUG("[GMRF] occupancy_map_topic: %s",  occupancy_map_topic.c_str());
+    ROS_DEBUG("[GMRF] sensor_topic: %s",  sensor_topic.c_str());
+    ROS_DEBUG("[GMRF] output_csv_file: %s",  output_csv_file.c_str());
 
 
 
@@ -167,6 +173,12 @@ void Cgmrf::publishMaps()
     //ROS_INFO("[GMRF] Publishing maps!");
     mean_advertise.publish(meanPC);
     var_advertise.publish(varPC);
+
+    //STORE AS CSV FILE
+    if (output_csv_file != "")
+    {
+        my_map->store_as_CSV(output_csv_file);
+    }
 }
 
 

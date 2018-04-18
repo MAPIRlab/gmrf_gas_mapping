@@ -32,6 +32,8 @@ public:
     void  updateMapEstimation_GMRF(float lambdaObsLoss);
     //GET mean and std maps
     void get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs::PointCloud2 &varPC);
+    //Stores map as CSV to specified file
+    void store_as_CSV(std::string output_csv_file);
 
 protected:
     std::vector<TRandomFieldCell>           m_map;
