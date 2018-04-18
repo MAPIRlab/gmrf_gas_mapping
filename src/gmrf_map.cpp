@@ -786,3 +786,44 @@ void CGMRF_map::get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs
         ROS_ERROR("[GMRF] Exception publishing as PCL: %s ", e.what() );
     }
 }
+
+void CGMRF_map::store_as_CSV(std::string output_csv_file)
+{
+    try{
+        std::string filename_mean = output_csv_file + " - mean.csv";
+        std::ofstream file_mean(filename_mean.c_str());
+
+        std::string filename_std = output_csv_file + " - std.csv";
+        std::ofstream file_std(filename_std.c_str());
+
+
+        //Generate Point-Cloud (for visualization)
+        for (unsigned int cell_idx=0; cell_idx<N; cell_idx++)
+        {
+            //Get mean and var (already normalized [0,1])
+            double mean = m_map[cell_idx].mean;
+            double std = m_map[cell_idx].std;
+
+            //Compute cell coordinates
+            double cell_x = (cell_idx % m_size_x);
+            double cell_y = floor(cell_idx/m_size_x);
+
+            file_mean << mean;
+            file_std << std;
+
+            if (cell_x >= m_size_x-1)
+            {
+                file_mean << '\n';
+                file_std << '\n';
+            } else {
+ 		file_mean << ',';
+                file_std << ',';
+		//ROS_INFO("[GMRF] CSV: %d/%d\t%d/%d ", int(cell_x), int(m_size_x), int(cell_y), int(m_size_y) );
+            }
+        }
+
+    }catch(std::exception e){
+        ROS_ERROR("[GMRF] Exception: %s ", e.what() );
+    }
+}
+
