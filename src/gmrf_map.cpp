@@ -827,3 +827,61 @@ void CGMRF_map::store_as_CSV(std::string output_csv_file)
     }
 }
 
+void CGMRF_map::write_raw_values(std_msgs::Float32MultiArray &meanRAW, std_msgs::Float32MultiArray &varRAW)
+{
+    try{
+	unsigned int W=m_size_x;
+	unsigned int H=m_size_y;
+		
+	//Dimensionalise matrix to be populated
+	meanRAW.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	meanRAW.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	meanRAW.layout.dim[0].label="height";
+	meanRAW.layout.dim[1].label="width";
+	meanRAW.layout.dim[0].size=H;
+	meanRAW.layout.dim[1].size=W;
+	meanRAW.layout.dim[0].stride=H*W;
+	meanRAW.layout.dim[1].stride=W;
+	meanRAW.layout.data_offset=0;
+
+	varRAW.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	varRAW.layout.dim.push_back(std_msgs::MultiArrayDimension());
+	varRAW.layout.dim[0].label="height";
+	varRAW.layout.dim[1].label="width";
+	varRAW.layout.dim[0].size=H;
+	varRAW.layout.dim[1].size=W;
+	varRAW.layout.dim[0].stride=H*W;
+	varRAW.layout.dim[1].stride=W;
+	varRAW.layout.data_offset=0;
+
+	std::vector<float> vec_mean(W*H,0);
+	std::vector<float> vec_var(W*H,0);
+
+        //Populate matrix with data
+        for (unsigned int i=0; i<H; i++)
+        {
+		for(unsigned int j=0; j<W; j++)
+		{
+			unsigned int cell_idx=i*W+j;
+		    	//Get mean and var (already normalized [0,1])
+		    	float mean = m_map[cell_idx].mean;
+		    	float std = m_map[cell_idx].std;
+	
+		    	//Compute cell coordinates
+		    	double cell_x = (cell_idx % m_size_x);
+		    	double cell_y = floor(cell_idx/m_size_x);
+
+			vec_mean[i*W + j] = mean;
+			vec_var[i*W + j] = std;			
+			
+		}            
+	}
+
+	meanRAW.data = vec_mean;
+	varRAW.data = vec_var;
+
+    }catch(std::exception e){
+        ROS_ERROR("[GMRF] Exception publishing raw: %s ", e.what() );
+    }
+}
+
