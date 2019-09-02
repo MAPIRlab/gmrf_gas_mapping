@@ -47,6 +47,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <tf/transform_listener.h>
+#include "std_msgs/Float32MultiArray.h"
 
 #include "gmrf_map.h"
 
@@ -101,7 +102,7 @@ protected:
 
     //Subscriptions & Publishers
     ros::Subscriber sub_sensor, occupancyMap_sub;
-    ros::Publisher mean_advertise, var_advertise;
+    ros::Publisher mean_advertise, var_advertise, mean_raw_advertise, var_raw_advertise;
 
     //Callbacks
     void sensorCallback(const olfaction_msgs::gas_sensorPtr msg);
