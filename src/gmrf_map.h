@@ -9,6 +9,11 @@
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include "std_msgs/Float32MultiArray.h"
+#include "std_msgs/MultiArrayDimension.h"
+#include <vector>
+#include <array>
+
 
 
 #define NUM_CELL_TEMPLATES 200      //For plotting only
@@ -34,6 +39,8 @@ public:
     void get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs::PointCloud2 &varPC);
     //Stores map as CSV to specified file
     void store_as_CSV(std::string output_csv_file);
+    //Writes raw mean and std values to matrix
+    void write_raw_values(std_msgs::Float32MultiArray &meanRAW, std_msgs::Float32MultiArray &varRAW);
 
 protected:
     std::vector<TRandomFieldCell>           m_map;

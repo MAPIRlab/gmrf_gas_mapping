@@ -64,6 +64,8 @@ Cgmrf::Cgmrf()
     //----------------------------------
     mean_advertise = param_n.advertise<sensor_msgs::PointCloud2>("mean_map", 20);
     var_advertise = param_n.advertise<sensor_msgs::PointCloud2>("var_map", 20);
+    mean_raw_advertise = param_n.advertise<std_msgs::Float32MultiArray>("mean_raw", 20);
+    var_raw_advertise = param_n.advertise<std_msgs::Float32MultiArray>("var_raw", 20);
     //----------------------------------
     // Services
     //----------------------------------
@@ -166,13 +168,17 @@ void Cgmrf::publishMaps()
 {
     //ROS_INFO("[GMRF] Getting Maps!");
     sensor_msgs::PointCloud2 meanPC, varPC;
+    std_msgs::Float32MultiArray meanRAW, varRAW;
     my_map->get_as_pointClouds(meanPC, varPC);
+    my_map->write_raw_values(meanRAW,varRAW);
     meanPC.header.frame_id = frame_id.c_str();
     varPC.header.frame_id = frame_id.c_str();
 
     //ROS_INFO("[GMRF] Publishing maps!");
     mean_advertise.publish(meanPC);
     var_advertise.publish(varPC);
+    mean_raw_advertise.publish(meanRAW);
+    var_raw_advertise.publish(varRAW);
 
     //STORE AS CSV FILE
     if (output_csv_file != "")
