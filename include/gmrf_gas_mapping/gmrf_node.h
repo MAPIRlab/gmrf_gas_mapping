@@ -82,7 +82,7 @@ public:
     double                                  max_sensor_val;
     double                                  min_sensor_val;
     double                                  suggest_next_location_sensor_th;
-    std::string                             output_csv_file;        // Optional output CSV file with the latest map. Get continuously overwritten. Ignored if empty
+    std::string                             output_csv_folder;        // Optional output CSV file with the latest map. Get continuously overwritten. Ignored if empty
 
     double                                  GMRF_lambdaPrior;       // [GMRF model] The information (Lambda) of prior factors
     double                                  GMRF_lambdaObs;         // [GMRF model] The initial information (Lambda) of each observation (this information will decrease with time)

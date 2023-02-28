@@ -788,12 +788,13 @@ void CGMRF_map::get_as_pointClouds(sensor_msgs::msg::PointCloud2 &meanPC, sensor
 void CGMRF_map::save_as_CSV(std::string output_csv_file)
 {
     try{
-        std::string filename_mean = output_csv_file + " - mean.csv";
+        std::string filename_mean = output_csv_file + "/GMRF_mean.csv";
         std::ofstream file_mean(filename_mean.c_str());
 
-        std::string filename_std = output_csv_file + " - std.csv";
+        std::string filename_std = output_csv_file + "/GMRF_std.csv";
         std::ofstream file_std(filename_std.c_str());
 
+        RCLCPP_INFO(this->get_logger(), "[CGMRF] saving to file: %s", filename_mean.c_str());
 
         //Generate Point-Cloud (for visualization)
         for (unsigned int cell_idx=0; cell_idx<N; cell_idx++)

@@ -25,7 +25,7 @@ gmrf_node:
     frame_id: "map"
     occupancy_map_topic: "/map"
     sensor_topic: "/Mox01/Sensor_reading"
-    output_csv_file: "/home/Pictures"
+    output_csv_folder: "/home/jgmonroy/Pictures"
     exec_freq: 1.0
     cell_size: 0.5
     min_sensor_val: 0.0

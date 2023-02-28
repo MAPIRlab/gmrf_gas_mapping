@@ -21,10 +21,8 @@ using std::placeholders::_1;
 // Cgmrf
 //--------------
 Cgmrf::Cgmrf(): Node("GMRF_node")
-{
-    printf("\n=================================================================");
-    printf("\n=	GMRF Gas-Distribution Mapping Node\n");
-    printf("\n=================================================================\n");
+{    
+    RCLCPP_INFO(this->get_logger(), "[GMRF] Loading parameters");
 
     //-----------------------------
     // Declare and Load Parameters
@@ -32,7 +30,7 @@ Cgmrf::Cgmrf(): Node("GMRF_node")
     frame_id = this->declare_parameter<std::string>("frame_id", "map");
     occupancy_map_topic = this->declare_parameter<std::string>("occupancy_map_topic", "/map");
     sensor_topic = this->declare_parameter<std::string>("sensor_topic", "/Mox01/Sensor_reading");
-    output_csv_file = this->declare_parameter<std::string>("output_csv_file", "");
+    output_csv_folder = this->declare_parameter<std::string>("output_csv_folder", "");
     exec_freq = this->declare_parameter<double>("exec_freq", 2.0);
     cell_size = this->declare_parameter<double>("cell_size", 0.5);
     min_sensor_val = this->declare_parameter<double>("min_sensor_val", 0.0);
@@ -47,7 +45,7 @@ Cgmrf::Cgmrf(): Node("GMRF_node")
     RCLCPP_INFO(this->get_logger(), "[GMRF] frame_id: %s", frame_id.c_str());
     RCLCPP_INFO(this->get_logger(), "[GMRF] occupancy_map_topic: %s",  occupancy_map_topic.c_str());
     RCLCPP_INFO(this->get_logger(), "[GMRF] sensor_topic: %s",  sensor_topic.c_str());
-    RCLCPP_INFO(this->get_logger(), "[GMRF] output_csv_file: %s",  output_csv_file.c_str());
+    RCLCPP_INFO(this->get_logger(), "[GMRF] output_csv_folder: %s",  output_csv_folder.c_str());
 
     //----------------------------------
     // Subscriptions
@@ -141,7 +139,7 @@ void Cgmrf::sensorCallback(const olfaction_msgs::msg::GasSensor::SharedPtr msg)
 
 void Cgmrf::mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-    RCLCPP_DEBUG(this->get_logger(), "%s - Got the map of the environment!", __FUNCTION__);
+    RCLCPP_INFO(this->get_logger(), "%s - Got the map of the environment!", __FUNCTION__);
     occupancyMap = *msg;
 
     // Set GasMap dimensions as the OccupancyMap
@@ -173,9 +171,9 @@ void Cgmrf::publishMaps()
     */
 
     //SAVE AS CSV FILE
-    if (output_csv_file != "")
+    if (output_csv_folder != "")
     {
-        my_map->save_as_CSV(output_csv_file);
+        my_map->save_as_CSV(output_csv_folder);
     }
 }
 
