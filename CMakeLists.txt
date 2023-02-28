@@ -55,6 +55,7 @@ install(TARGETS
 # Install launch files.
 install(DIRECTORY
   launch
+  maps
   DESTINATION share/${PROJECT_NAME}/
 )
 
