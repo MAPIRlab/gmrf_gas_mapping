@@ -1,52 +1,44 @@
-<package>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>gmrf_gas_mapping</name>
   <version>0.0.0</version>
   <description>Implementation of the Time-Variant gas distribution mapping using Gaussian Markov Random Fields
-               See: http://mapir.isa.uma.es/mapirwebsite/index.php/mapir-downloads/papers/193</description>
-  <maintainer email="jgmonroy@uma.es">Javier G Monroy</maintainer>
-
+               See: http://mapir.isa.uma.es/jgmonroy/papers/2015_GDM_TimeVariant_Obstacles_AutonomousRobots.pdf</description>
+  <maintainer email="jgmonroy@uma.es">Javier Monroy</maintainer>
   <license>GPLv3</license>
-
-  <url type="website">http://www.ros.org</url>
-
-  <author>Javier G. Monroy</author>  
+  <author>Javier Monroy</author>  
 
   <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
 
   <!-- Dependencies needed to compile this package. -->
-  <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>geometry_msgs</build_depend>  
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>visualization_msgs</build_depend>
   <build_depend>olfaction_msgs</build_depend>
-  <build_depend>tf</build_depend>  
-  <build_depend>image_transport</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>opencv2</build_depend>
-  <build_depend>libpcl-all-dev</build_depend>
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>eigen</build_depend>
-
-  
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>Eigen3</build_depend>
   
   <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>roscpp</run_depend>
-  <run_depend>std_msgs</run_depend>  
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>visualization_msgs</run_depend>
-  <run_depend>olfaction_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>opencv2</run_depend>
-  <run_depend>libpcl-all-dev</run_depend>
-  <run_depend>pcl_ros</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <run_depend>eigen</run_depend>
+  <exec_depend>std_msgs</exec_depend>  
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>olfaction_msgs</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>Eigen3</exec_depend>
+  
+  <exec_depend>eigen</exec_depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
