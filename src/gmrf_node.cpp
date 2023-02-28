@@ -13,57 +13,57 @@
 //	version: 1.0	16/09/2016
 //========================================================================================
 
-#include "gmrf_node.h"
+#include "gmrf_gas_mapping/gmrf_node.h"
+
+using std::placeholders::_1;
 
 // -------------
 // Cgmrf
 //--------------
-Cgmrf::Cgmrf()
+Cgmrf::Cgmrf(): Node("GMRF_node")
 {
     printf("\n=================================================================");
     printf("\n=	GMRF Gas-Distribution Mapping Node\n");
     printf("\n=================================================================\n");
 
-    //------------------
-    // Load Parameters
-    //------------------
-    ros::NodeHandle param_n("~");
-    param_n.param<std::string>("frame_id", frame_id, "/map");
-    param_n.param<std::string>("occupancy_map_topic", occupancy_map_topic, "/map");
-    param_n.param<std::string>("sensor_topic", sensor_topic, "/Mox01/Sensor_reading");
-    param_n.param<std::string>("output_csv_file", output_csv_file, "");
-    param_n.param<double>("exec_freq", exec_freq, 2.0 );
-    param_n.param<double>("cell_size", cell_size, 0.5);
+    //-----------------------------
+    // Declare and Load Parameters
+    //-----------------------------    
+    frame_id = this->declare_parameter<std::string>("frame_id", "map");
+    occupancy_map_topic = this->declare_parameter<std::string>("occupancy_map_topic", "/map");
+    sensor_topic = this->declare_parameter<std::string>("sensor_topic", "/Mox01/Sensor_reading");
+    output_csv_file = this->declare_parameter<std::string>("output_csv_file", "");
+    exec_freq = this->declare_parameter<double>("exec_freq", 2.0);
+    cell_size = this->declare_parameter<double>("cell_size", 0.5);
+    min_sensor_val = this->declare_parameter<double>("min_sensor_val", 0.0);
+    max_sensor_val = this->declare_parameter<double>("max_sensor_val", 5.0);
 
-    param_n.param<double>("GMRF_lambdaPrior", GMRF_lambdaPrior, 0.5);   // [GMRF model] The information (Lambda) of prior factors
-    param_n.param<double>("GMRF_lambdaObs", GMRF_lambdaObs, 10.0);       // [GMRF model] The initial information (Lambda) of each observation (this information will decrease with time)
-    param_n.param<double>("GMRF_lambdaObsLoss", GMRF_lambdaObsLoss, 0.0);// [GMRF model] The loss of information (Lambda) of the observations with each iteration (see AppTick)
+    GMRF_lambdaPrior = this->declare_parameter<double>("GMRF_lambdaPrior", 0.5); // [GMRF model] The information (Lambda) of prior factors
+    GMRF_lambdaObs = this->declare_parameter<double>("GMRF_lambdaObs", 10.0);   // [GMRF model] The initial information (Lambda) of each observation (this information will decrease with time)
+    GMRF_lambdaObsLoss = this->declare_parameter<double>("GMRF_lambdaObsLoss", 0.0);    // [GMRF model] The loss of information (Lambda) of the observations with each iteration (see AppTick)
+    //param_n.param<double>("suggest_next_location_sensor_th", suggest_next_location_sensor_th, 0.1);
 
-    param_n.param<std::string>("colormap", colormap, "jet");
-    param_n.param<int>("max_pclpoints_cell", max_pclpoints_cell, 20);
-    param_n.param<double>("min_sensor_val", min_sensor_val, 0.0);
-    param_n.param<double>("max_sensor_val", max_sensor_val, 0.0);
-
-    param_n.param<double>("suggest_next_location_sensor_th", suggest_next_location_sensor_th, 0.1);
-
-
-    ROS_DEBUG("[GMRF] frame_id: %s",  frame_id.c_str());
-    ROS_DEBUG("[GMRF] occupancy_map_topic: %s",  occupancy_map_topic.c_str());
-    ROS_DEBUG("[GMRF] sensor_topic: %s",  sensor_topic.c_str());
-    ROS_DEBUG("[GMRF] output_csv_file: %s",  output_csv_file.c_str());
-
-
+    // Display main parameters
+    RCLCPP_INFO(this->get_logger(), "[GMRF] frame_id: %s", frame_id.c_str());
+    RCLCPP_INFO(this->get_logger(), "[GMRF] occupancy_map_topic: %s",  occupancy_map_topic.c_str());
+    RCLCPP_INFO(this->get_logger(), "[GMRF] sensor_topic: %s",  sensor_topic.c_str());
+    RCLCPP_INFO(this->get_logger(), "[GMRF] output_csv_file: %s",  output_csv_file.c_str());
 
     //----------------------------------
     // Subscriptions
     //----------------------------------
-    sub_sensor = param_n.subscribe(sensor_topic, 1, &Cgmrf::sensorCallback, this);
-    occupancyMap_sub = param_n.subscribe(occupancy_map_topic, 1, &Cgmrf::mapCallback, this);
+    sub_gas_sensor = this->create_subscription<olfaction_msgs::msg::GasSensor>(sensor_topic ,1, std::bind(&Cgmrf::sensorCallback, this, _1) );
+    sub_occupancy_map = this->create_subscription<nav_msgs::msg::OccupancyGrid>(occupancy_map_topic,1, std::bind(&Cgmrf::mapCallback, this, _1) );
+ 
+
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
     //----------------------------------
     // Publishers
     //----------------------------------
-    mean_advertise = param_n.advertise<sensor_msgs::PointCloud2>("mean_map", 20);
-    var_advertise = param_n.advertise<sensor_msgs::PointCloud2>("var_map", 20);
+    //mean_advertise = param_n.advertise<sensor_msgs::PointCloud2>("mean_map", 20);
+    //var_advertise = param_n.advertise<sensor_msgs::PointCloud2>("var_map", 20);
     //----------------------------------
     // Services
     //----------------------------------
@@ -79,7 +79,7 @@ Cgmrf::~Cgmrf(){}
 //-------------
 // CALLBACKS
 //-------------
-void Cgmrf::sensorCallback(const olfaction_msgs::gas_sensorPtr msg)
+void Cgmrf::sensorCallback(const olfaction_msgs::msg::GasSensor::SharedPtr msg)
 {
     mutex_nose.lock();
     try
@@ -100,63 +100,60 @@ void Cgmrf::sensorCallback(const olfaction_msgs::gas_sensorPtr msg)
         else if(msg->raw_units == msg->UNITS_AMP)
             curr_reading = msg->raw;
     }catch(std::exception e){
-        ROS_ERROR("[GMRF] Exception at new Obs: %s ", e.what() );
+        RCLCPP_ERROR(this->get_logger(), "[GMRF] Exception at new Obs: %s ", e.what() );
     }
 
     mutex_nose.unlock();
 
 
     //Get pose of the sensor in the /map reference system
-    tf::StampedTransform transform;
-    bool know_sensor_pose = true;
-    try
-    {
-      tf_listener.lookupTransform(frame_id.c_str(),msg->header.frame_id.c_str(), ros::Time(0), transform);
+    geometry_msgs::msg::TransformStamped t;
+    std::string fromFrameRel = frame_id.c_str();
+    std::string toFrameRel = msg->header.frame_id.c_str();
+    try {
+        t = tf_buffer_->lookupTransform(toFrameRel, fromFrameRel, tf2::TimePointZero);
+    } catch (const tf2::TransformException & ex) {
+        RCLCPP_ERROR(this->get_logger(), "Could not transform %s to %s: %s",
+        toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
+        return;
     }
-    catch (tf::TransformException ex)
-    {
-        ROS_ERROR("[GMRF] %s",ex.what());
-        know_sensor_pose = false;
-        ros::Duration(1.0).sleep();
-    }
-
 
     if (module_init)
     {
         //Current sensor pose
-        float x_pos = transform.getOrigin().x();
-        float y_pos = transform.getOrigin().y();
+        float x_pos = t.transform.translation.x;
+        float y_pos = t.transform.translation.y;
 
         //Add new observation to the map
         if (curr_reading <0 || curr_reading > 1)
         {
-            ROS_WARN("[GMRF] Obs is out of bouns! %.2f [0,1]. Normalizing!", curr_reading);
+            RCLCPP_WARN(this->get_logger(), "[GMRF] Obs is out of bouns! %.2f [0,1]. Normalizing!", curr_reading);
             curr_reading = 1.0;
         }
         mutex_nose.lock();
         //ROS_WARN("[GMRF] New obs: %.2f at (%.2f,%.2f)", curr_reading,x_pos,y_pos);
-        my_map->insertObservation_GMRF(curr_reading,x_pos,y_pos, GMRF_lambdaObs);
+        my_map->insertObservation_GMRF(curr_reading, x_pos, y_pos, GMRF_lambdaObs);
         mutex_nose.unlock();
-
     }
 }
 
 
 
-void Cgmrf::mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
+void Cgmrf::mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-    ROS_DEBUG("%s - Got the map of the environment!", __FUNCTION__);
+    RCLCPP_DEBUG(this->get_logger(), "%s - Got the map of the environment!", __FUNCTION__);
     occupancyMap = *msg;
 
-    //Set GasMap dimensions as the OccupancyMap
+    // Set GasMap dimensions as the OccupancyMap
     double map_min_x = msg->info.origin.position.x;
-    double map_max_x =  msg->info.origin.position.x + msg->info.width*msg->info.resolution;
-    double map_min_y =  msg->info.origin.position.y;
-    double map_max_y =  msg->info.origin.position.y + msg->info.height*msg->info.resolution;
+    double map_max_x = msg->info.origin.position.x + msg->info.width*msg->info.resolution;
+    double map_min_y = msg->info.origin.position.y;
+    double map_max_y = msg->info.origin.position.y + msg->info.height*msg->info.resolution;
 
-    //Create GasMap
-    my_map = new CGMRF_map(occupancyMap, cell_size, GMRF_lambdaPrior,colormap,max_pclpoints_cell);
-    ROS_INFO("[GMRF] GasGridMap initialized");
+    // Create GasMap
+    //my_map = new CGMRF_map(occupancyMap, cell_size, GMRF_lambdaPrior,colormap,max_pclpoints_cell);
+    my_map = new CGMRF_map(occupancyMap, cell_size, GMRF_lambdaPrior);
+    RCLCPP_INFO(this->get_logger(), "[GMRF] GasGridMap initialized");
 
     module_init = true;
 }
@@ -164,7 +161,7 @@ void Cgmrf::mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 
 void Cgmrf::publishMaps()
 {
-    //ROS_INFO("[GMRF] Getting Maps!");
+    /*
     sensor_msgs::PointCloud2 meanPC, varPC;
     my_map->get_as_pointClouds(meanPC, varPC);
     meanPC.header.frame_id = frame_id.c_str();
@@ -173,11 +170,12 @@ void Cgmrf::publishMaps()
     //ROS_INFO("[GMRF] Publishing maps!");
     mean_advertise.publish(meanPC);
     var_advertise.publish(varPC);
+    */
 
-    //STORE AS CSV FILE
+    //SAVE AS CSV FILE
     if (output_csv_file != "")
     {
-        my_map->store_as_CSV(output_csv_file);
+        my_map->save_as_CSV(output_csv_file);
     }
 }
 
@@ -187,38 +185,26 @@ void Cgmrf::publishMaps()
 //----------------------------
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "gmrf_node");
-	Cgmrf my_gmrf_map;
+	rclcpp::init(argc, argv);
 
-	ROS_INFO("[gmrf] LOOP....");
-	ros::Time last_publication_time = ros::Time::now();
-	ros::Rate loop_rate(my_gmrf_map.exec_freq);
+    // Greate a class object
+    auto my_gmrf_map = std::make_shared<Cgmrf>();
+	rclcpp::Rate loop_rate(my_gmrf_map->exec_freq);
 	
-	while (ros::ok())
+	while (rclcpp::ok())
 	{
-		ros::spinOnce();                    //Callbacks & Services
+		rclcpp::spin_some(my_gmrf_map);
 
-		if (my_gmrf_map.module_init)
+		if (my_gmrf_map->module_init)
 		{
 			// Update and Publish maps
-            my_gmrf_map.my_map->updateMapEstimation_GMRF(my_gmrf_map.GMRF_lambdaObsLoss);
-            my_gmrf_map.publishMaps();
-			
-			// Info about actual rate
-			ROS_INFO("[gmrf] Updating every %f seconds. Intended preiod was %f", (ros::Time::now()-last_publication_time).toSec(), 1.0/my_gmrf_map.exec_freq);
-			last_publication_time = ros::Time::now();
+            my_gmrf_map->my_map->updateMapEstimation_GMRF(my_gmrf_map->GMRF_lambdaObsLoss);
+            my_gmrf_map->publishMaps();
 		}
         else
         {
-			ROS_INFO("[gmrf] Waiting for initialization (Map of environment).");
+			printf("[gmrf_node] Waiting for initialization (Map of environment).");
 		}
         loop_rate.sleep();
 	}
 }
-
-
-
-
-
-
-

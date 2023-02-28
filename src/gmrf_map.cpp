@@ -1,13 +1,11 @@
-#include "gmrf_map.h"
-
-
+#include "gmrf_gas_mapping/gmrf_map.h"
 
 
 /*---------------------------------------------------------------
                         Constructor
   ---------------------------------------------------------------*/
-
-CGMRF_map::CGMRF_map(const nav_msgs::OccupancyGrid &oc_map, float cell_size, float m_lambdaPrior, std::string m_colormap, int max_points_cell)
+//CGMRF_map::CGMRF_map(const nav_msgs::msg::OccupancyGrid &oc_map, float cell_size, float m_lambdaPrior, std::string m_colormap, int max_points_cell): Node("GMRF_map")
+CGMRF_map::CGMRF_map(const nav_msgs::msg::OccupancyGrid &oc_map, float cell_size, float m_lambdaPrior): Node("GMRF_map")
 {
     try
     {
@@ -40,18 +38,18 @@ CGMRF_map::CGMRF_map(const nav_msgs::OccupancyGrid &oc_map, float cell_size, flo
         init_cell.mean = 0.0;
         init_cell.std = 0.0;
         m_map.assign(N, init_cell);
-        ROS_INFO("[CGMRF] Map created: %u cells, x=(%.2f,%.2f) y=(%.2f,%.2f)", static_cast<unsigned int>(m_map.size()), m_x_min, m_x_max, m_y_min, m_y_max);
+        RCLCPP_INFO(this->get_logger(), "[CGMRF] Map created: %u cells, x=(%.2f,%.2f) y=(%.2f,%.2f)", static_cast<unsigned int>(m_map.size()), m_x_min, m_x_max, m_y_min, m_y_max);
 
 
         //---------------------
         // INIT RANDOM FIELD
         //---------------------
-        ROS_INFO("[CGMRF] Generating Prior based on 'Squared Differences' ");
+        RCLCPP_INFO(this->get_logger(),"[CGMRF] Generating Prior based on 'Squared Differences' ");
         //Set initial factors: L "prior factors" + 0 "Observation factors"
         nPriorFactors = (m_size_x -1) * m_size_y + m_size_x * (m_size_y -1);	// L = (Nr-1)*Nc + Nr*(Nc-1); Full connected
         nObsFactors = 0;                                                        // M
         nFactors = nPriorFactors + nObsFactors;
-        ROS_INFO("[CGMRF] %lu factors for a map size of N=%lu", nFactors, N);
+        RCLCPP_INFO(this->get_logger(),"[CGMRF] %lu factors for a map size of N=%lu", nFactors, N);
 
 
         //Initialize H_prior, gradient = 0, and the vector of active observations = empty
@@ -82,7 +80,6 @@ CGMRF_map::CGMRF_map(const nav_msgs::OccupancyGrid &oc_map, float cell_size, flo
 
             seed_cxo = cxoj_min + ceil(res_coef/2-1);
             seed_cyo = cyoj_min + ceil(res_coef/2-1);
-
 
             //If a cell is free then add observation with very low information
             //to force non-visited cells to have a 0.0 mean
@@ -202,10 +199,10 @@ CGMRF_map::CGMRF_map(const nav_msgs::OccupancyGrid &oc_map, float cell_size, flo
         */
 
         //Pre-generate Point-Clouds for visualization
-        init_pcl_templates(m_colormap, max_points_cell);
+        //init_pcl_templates(m_colormap, max_points_cell);
 
     }catch(std::exception e){
-        ROS_ERROR("[GMRF-Constructor] Exception: %s ", e.what() );
+        RCLCPP_ERROR(this->get_logger(), "[GMRF-Constructor] Exception: %s ", e.what() );
     }
 }
 
@@ -216,7 +213,7 @@ CGMRF_map::~CGMRF_map(){}
 
 
 bool CGMRF_map::exist_relation_between2cells(
-    const nav_msgs::OccupancyGrid *m_Ocgridmap,
+    const nav_msgs::msg::OccupancyGrid *m_Ocgridmap,
     size_t cxo_min,
     size_t cxo_max,
     size_t cyo_min,
@@ -228,7 +225,7 @@ bool CGMRF_map::exist_relation_between2cells(
 {
     try
     {
-        //ROS_INFO("Checking relation between cells (%i,%i) and (%i,%i)", seed_cxo,seed_cyo,objective_cxo,objective_cyo);
+        //RCLCPP_INFO(this->get_logger(),("Checking relation between cells (%i,%i) and (%i,%i)", seed_cxo,seed_cyo,objective_cxo,objective_cyo);
 
         //Ensure delimited region is within the Occupancy map
         cxo_min = std::max (cxo_min, (size_t)0);
@@ -236,7 +233,7 @@ bool CGMRF_map::exist_relation_between2cells(
         cyo_min = std::max (cyo_min, (size_t)0);
         cyo_max = std::min (cyo_max, (size_t)m_Ocgridmap->info.height-1);
 
-        //ROS_INFO("Under gridlimits cx=(%i,%i) and cy=(%i,%i) \n", cxo_min,cxo_max,cyo_min,cyo_max);
+        //RCLCPP_INFO(this->get_logger(),("Under gridlimits cx=(%i,%i) and cy=(%i,%i) \n", cxo_min,cxo_max,cyo_min,cyo_max);
 
         //Check that seed and objective are inside the delimited Occupancy gridmap
         if( (seed_cxo < cxo_min) || (seed_cxo >= cxo_max) || (seed_cyo < cyo_min) || (seed_cyo >= cyo_max) )
@@ -320,7 +317,7 @@ bool CGMRF_map::exist_relation_between2cells(
         //cout << "Connection not found (false)" << endl;
         return false;
     }catch(std::exception e){
-        ROS_ERROR("[GMRF] Exception while checking cells interconnections: %s ", e.what() );
+        RCLCPP_ERROR(this->get_logger(), "[GMRF] Exception while checking cells interconnections: %s ", e.what() );
     }
 }
 
@@ -336,12 +333,12 @@ void CGMRF_map::insertObservation_GMRF(float normReading, float x_pos, float y_p
         new_obs.obsValue = normReading;
         new_obs.Lambda = lambdaObs;
         new_obs.time_invariant = false;		//Default behaviour, the obs will lose weight with time.
-        //ROS_INFO("[GMRF] Adding obs %.2f at cell_idx %i", normReading, cellIdx);
+        //RCLCPP_INFO(this->get_logger(), "[GMRF] Adding obs %.2f at cell_idx %i", normReading, cellIdx);
         activeObs[cellIdx].push_back(new_obs);
 
 
     }catch(std::exception e){
-        ROS_ERROR("[GMRF] Exception while Inserting new Observation: %s ", e.what() );
+        RCLCPP_ERROR(this->get_logger(), "[GMRF] Exception while Inserting new Observation: %s ", e.what() );
     }
 }
 
@@ -358,13 +355,13 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
         //------------------
         //  1- HESSIAN
         //------------------
-        //ROS_INFO("[GMRF] H_prior");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] H_prior");
         //Build Sparse Hessian H, from list of triplets (Hprior):
         std::vector<Eigen::Triplet<double> > H_tri(H_prior.size());
         H_tri.reserve( H_prior.size()+N );
         std::copy( H_prior.begin(), H_prior.end(), H_tri.begin() );
 
-        //ROS_INFO("[GMRF] H_obs");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] H_obs");
         //Add H_obs
         for (size_t j=0; j<N; j++)
         {
@@ -387,7 +384,7 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
         //------------------
         //  2- GRADIENT
         //------------------
-        //ROS_INFO("[GMRF] gradient");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] gradient");
         //Reset and Built Gradient Vector
         g.setZero();
         size_t cx = 0;
@@ -422,7 +419,7 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
 
 
 
-        //ROS_INFO("[GMRF] Chol");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] Chol");
         //Cholesky Factorization of Hessian --> Realmente se hace: chol( P * H * inv(P) )
         Eigen::SimplicialLLT< Eigen::SparseMatrix <double> > solver;
         solver.compute(Hsparse);
@@ -432,7 +429,7 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
 
 
 
-        //ROS_INFO("[GMRF] variance");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] variance");
         // VARIANCE SIGMA = inv(P) * inv( P*H*inv(P) ) * P
         //Get triangular supperior P*H*inv(P) = UT' * UT = P * R'*R * inv(P)
         Eigen::SparseMatrix<double> UT = solver.matrixU();
@@ -480,7 +477,7 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
         }
 
 
-        //ROS_INFO("[GMRF] update");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] update");
         // Update Mean-Variance and force (0 < m_map[i].mean < 1)
         for (size_t j=0; j<N; j++)
         {
@@ -495,7 +492,7 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
         }
 
 
-        //ROS_INFO("[GMRF] TimeVariant");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] TimeVariant");
         // Update Information/Strength of Active Observations
         //---------------------------------------------------------
         for (size_t j=0; j<activeObs.size(); j++)
@@ -515,12 +512,12 @@ void  CGMRF_map::updateMapEstimation_GMRF(float lambdaObsLoss)
             }
         }
     }catch(std::exception e){
-        ROS_ERROR("[GMRF] Exception Updating the maps: %s ", e.what() );
+        RCLCPP_ERROR(this->get_logger(), "[GMRF] Exception Updating the maps: %s ", e.what() );
     }
 }
 
 
-
+/*
 //To improve speed Pre-generate different PCL-Templates based on selected color scheme
 void CGMRF_map::init_pcl_templates(std::string colormap, int max_points_cell)
 {
@@ -670,7 +667,7 @@ void CGMRF_map::init_pcl_templates(std::string colormap, int max_points_cell)
 
         pcl::PointCloud<pcl::PointXYZRGB> curr_pc;
         curr_pc.width = round(conc * max_points_cell);
-        //ROS_INFO("For %d, the number of cells is %d",t,curr_pc.width);
+        //RCLCPP_INFO(this->get_logger(),("For %d, the number of cells is %d",t,curr_pc.width);
         curr_pc.height = 1;
         curr_pc.points.resize (curr_pc.width * curr_pc.height);
 
@@ -693,7 +690,7 @@ void CGMRF_map::init_pcl_templates(std::string colormap, int max_points_cell)
 
 
 
-void CGMRF_map::get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs::PointCloud2 &varPC)
+void CGMRF_map::get_as_pointClouds(sensor_msgs::msg::PointCloud2 &meanPC, sensor_msgs::msg::PointCloud2 &varPC)
 {
     try
     {
@@ -744,7 +741,7 @@ void CGMRF_map::get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs
             if(std > 0)
             {
                 //STD values are not normalized...Normalize the plot
-                //ROS_INFO("STD: %.2f", std);
+                //RCLCPP_INFO(this->get_logger(),("STD: %.2f", std);
                 std = std::min(std,2.0);
                 std = std/2.0;
                 //Load PointCloud template based on current concentration
@@ -773,7 +770,7 @@ void CGMRF_map::get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs
             }
         }
 
-        //ROS_INFO("[GMRF] Maps-ToPCL2");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] Maps-ToPCL2");
         //Publish the generated PointClouds
         pcl::PCLPointCloud2 temp_m, temp_v;
         pcl::toPCLPointCloud2(m_cloud, temp_m);
@@ -781,13 +778,14 @@ void CGMRF_map::get_as_pointClouds(sensor_msgs::PointCloud2 &meanPC, sensor_msgs
         //Transform to ROS pointcloud_msg
         pcl_conversions::moveFromPCL(temp_m, meanPC);
         pcl_conversions::moveFromPCL(temp_v, varPC);
-        //ROS_INFO("[GMRF] Maps-End");
+        //RCLCPP_INFO(this->get_logger(),("[GMRF] Maps-End");
     }catch(std::exception e){
         ROS_ERROR("[GMRF] Exception publishing as PCL: %s ", e.what() );
     }
 }
+*/
 
-void CGMRF_map::store_as_CSV(std::string output_csv_file)
+void CGMRF_map::save_as_CSV(std::string output_csv_file)
 {
     try{
         std::string filename_mean = output_csv_file + " - mean.csv";
@@ -816,14 +814,13 @@ void CGMRF_map::store_as_CSV(std::string output_csv_file)
                 file_mean << '\n';
                 file_std << '\n';
             } else {
- 		file_mean << ',';
+ 		        file_mean << ',';
                 file_std << ',';
-		//ROS_INFO("[GMRF] CSV: %d/%d\t%d/%d ", int(cell_x), int(m_size_x), int(cell_y), int(m_size_y) );
+		        //RCLCPP_INFO(this->get_logger(), "[GMRF] CSV: %d/%d\t%d/%d ", int(cell_x), int(m_size_x), int(cell_y), int(m_size_y) );
             }
         }
 
     }catch(std::exception e){
-        ROS_ERROR("[GMRF] Exception: %s ", e.what() );
+        RCLCPP_ERROR(this->get_logger(), "[GMRF] Exception: %s ", e.what() );
     }
 }
-

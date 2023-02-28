@@ -34,28 +34,33 @@
 *********************************************************************/
 
 //-----------------------------------------------------
-// ROS wrapper for the GMRF gas-distribution mapping
+// ROS2 wrapper for the GMRF gas-distribution mapping
 //-----------------------------------------------------
-#include "ros/ros.h"
-#include "std_msgs/Float32.h"
-#include "nav_msgs/Odometry.h"
-#include "nav_msgs/OccupancyGrid.h"
-#include <sensor_msgs/PointCloud2.h>
-#include "olfaction_msgs/gas_sensor.h"
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
-#include <visualization_msgs/MarkerArray.h>
+#include <rclcpp/rclcpp.hpp>
+#include "std_msgs/msg/float32.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
+#include "olfaction_msgs/msg/gas_sensor.hpp"
+#include "gmrf_gas_mapping/gmrf_map.h"
+
 #include <boost/thread/mutex.hpp>
 #include <boost/math/constants/constants.hpp>
-#include <tf/transform_listener.h>
+#include <tf2_ros/transform_listener.h>
+#include "tf2_ros/buffer.h"
 
-#include "gmrf_map.h"
+/*
+#include <sensor_msgs/PointCloud2.h>
+#include <visualization_msgs/MarkerArray.h>
+*/
 
 //Services
-#include "olfaction_msgs/suggestNextObservationLocation.h"
+#include "olfaction_msgs/srv/suggest_next_observation_location.h"
 
 
 
-class Cgmrf
+class Cgmrf: public rclcpp::Node
 {
 public:
     Cgmrf();
@@ -64,7 +69,7 @@ public:
 
     //GMRF variables    
     CGMRF_map                               *my_map;			// The Online Gas Distribution Map being generated
-    nav_msgs::OccupancyGrid                 occupancyMap;       //Occupancy GridMap of the environment
+    nav_msgs::msg::OccupancyGrid             occupancyMap;       //Occupancy GridMap of the environment
 
     //Node Params
     std::string                             sensor_topic;
@@ -85,7 +90,7 @@ public:
 
 
     //Variables
-    bool module_init;
+    bool                                    module_init;
     boost::mutex                            mutex_nose;
     boost::mutex                            mutex_position;
     bool                                    new_data_position;
@@ -96,16 +101,16 @@ public:
 
 
 protected:
-    ros::NodeHandle                         n;
-    tf::TransformListener                   tf_listener; //Do not put inside the callback
-
     //Subscriptions & Publishers
-    ros::Subscriber sub_sensor, occupancyMap_sub;
-    ros::Publisher mean_advertise, var_advertise;
+    rclcpp::Subscription<olfaction_msgs::msg::GasSensor>::SharedPtr sub_gas_sensor;
+    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_map;
 
     //Callbacks
-    void sensorCallback(const olfaction_msgs::gas_sensorPtr msg);
-    void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
+    void sensorCallback(const olfaction_msgs::msg::GasSensor::SharedPtr msg);
+    void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
+    std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 };
 
 
