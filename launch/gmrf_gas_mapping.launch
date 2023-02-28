@@ -2,11 +2,11 @@
 <launch>
     <arg name="launch_prefix" default="" />
     
-	<node pkg="gmrf_gas_mapping" type="gmrf_gas_mapping_node" name="gmrf_node" output="screen" launch-prefix="$(arg launch_prefix)">
-		<param name="frame_id" value="/map" />                      ### frame where the map is published
-		<param name="sensor_topic" value="/PID/Sensor_reading" />   ### (read) topic for gas sensor/enose		
+	<node pkg="gmrf_gas_mapping" exec="gmrf_gas_mapping_node" name="gmrf_node" output="screen" launch-prefix="$(arg launch_prefix)">
+		<param name="frame_id" value="map" />                       ### frame where the map is published
+		<param name="sensor_topic" value="/gas_data" />   			### (read) topic for gas sensor/enose		
 		<param name="exec_freq" value="0.5" />                      ### (Hz) frequency to update and publish the maps		
-		<param name="cell_size" value="0.21" />                     ### (m)
+		<param name="cell_size" value="0.1" />                      ### (m)
 		
 		#GMRF params
 		<param name="GMRF_lambdaPrior" value="0.5" />               ### The information (Lambda) of prior factors
@@ -17,7 +17,7 @@
 		<param name="colormap" value="jet" />                       ### jet, hot, cool, spring, summer, autumn, winter, bone, copper, red, green
 		<param name="max_pclpoints_cell" value="20" />              ### Max number of points to plot per cell (when concentration is max)
 		<param name="min_sensor_val" value="0" />                   ### For normalization
-		<param name="max_sensor_val" value="6" />
+		<param name="max_sensor_val" value="1" />
 	</node>
 
 </launch>

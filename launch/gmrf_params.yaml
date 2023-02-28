@@ -1,0 +1,37 @@
+# PARAMETERS FOR NAV2 STACK
+# info: https://navigation.ros.org/setup_guides/algorithm/select_algorithm.html
+
+#-------------------------------------------------
+# (Map Server/Saver)
+#-------------------------------------------------
+map_server:
+  ros__parameters:
+    use_sim_time: False
+    yaml_filename: "map_name.yaml"
+    topic_name: "/map"
+    frame_id: "map"
+
+map_saver:
+  ros__parameters:
+    use_sim_time: False
+    save_map_timeout: 5.0
+    free_thresh_default: 0.25
+    occupied_thresh_default: 0.65
+    map_subscribe_transient_local: True
+
+gmrf_node:
+  ros__parameters:
+    use_sim_time: False
+    frame_id: "map"
+    occupancy_map_topic: "/map"
+    sensor_topic: "/Mox01/Sensor_reading"
+    output_csv_file: "/home/Pictures"
+    exec_freq: 1.0
+    cell_size: 0.5
+    min_sensor_val: 0.0
+    max_sensor_val: 1.0
+
+    GMRF_lambdaPrior: 0.5
+    GMRF_lambdaObs: 10.0
+    GMRF_lambdaObsLoss: 0.0
+    
