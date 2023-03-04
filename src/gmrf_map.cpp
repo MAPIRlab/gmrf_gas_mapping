@@ -333,7 +333,7 @@ void CGMRF_map::insertObservation_GMRF(float normReading, float x_pos, float y_p
         new_obs.obsValue = normReading;
         new_obs.Lambda = lambdaObs;
         new_obs.time_invariant = false;		//Default behaviour, the obs will lose weight with time.
-        //RCLCPP_INFO(this->get_logger(), "[GMRF] Adding obs %.2f at cell_idx %i", normReading, cellIdx);
+        RCLCPP_INFO(this->get_logger(), "[GMRF] Adding obs %.2f at cell_idx %i", normReading, cellIdx);
         activeObs[cellIdx].push_back(new_obs);
 
 
