@@ -45,10 +45,14 @@ include_directories(include)
 add_executable(gmrf_node src/gmrf_map.cpp src/gmrf_node.cpp)
 ament_target_dependencies(gmrf_node rclcpp std_msgs sensor_msgs geometry_msgs olfaction_msgs Eigen3 tf2 tf2_ros)
 
+add_executable(gmrf_simple_publisher src/gmrf_simple_publisher.cpp)
+ament_target_dependencies(gmrf_simple_publisher rclcpp std_msgs olfaction_msgs)
+
 
 # Declare and install executables
 install(TARGETS
   gmrf_node
+  gmrf_simple_publisher
   DESTINATION lib/${PROJECT_NAME}
 )
 
