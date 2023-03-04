@@ -50,6 +50,16 @@ def generate_launch_description():
             remappings=remappings
             ),
 
+        # Simple publisher (from CSV file)
+        Node(
+            package='gmrf_gas_mapping',
+            executable='gmrf_simple_publisher',
+            name='gmrf_pub',
+            output='screen',
+            parameters=[params_yaml_file],
+            remappings=remappings
+            ),
+
         # LIFECYCLE MANAGER
         Node(
             package='nav2_lifecycle_manager',

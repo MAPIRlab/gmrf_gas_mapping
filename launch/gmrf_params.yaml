@@ -24,14 +24,21 @@ gmrf_node:
     use_sim_time: False
     frame_id: "map"
     occupancy_map_topic: "/map"
-    sensor_topic: "/Mox01/Sensor_reading"
+    sensor_topic: "/noSensor"
+    observation_topic: "/fromCSV"
     output_csv_folder: "/home/jgmonroy/Pictures"
-    exec_freq: 1.0
+    exec_freq: 10.0
     cell_size: 0.5
     min_sensor_val: 0.0
     max_sensor_val: 1.0
 
-    GMRF_lambdaPrior: 0.5
-    GMRF_lambdaObs: 10.0
+    GMRF_lambdaPrior: 5.0
+    GMRF_lambdaObs: 0.1
     GMRF_lambdaObsLoss: 0.0
-    
+
+gmrf_pub:
+  ros__parameters:
+    frame_id: "map"
+    topic: "/fromCSV"
+    input_csv_file: "/home/jgmonroy/Downloads/measurements_nicolas.csv"
+    exec_freq: 10.0
