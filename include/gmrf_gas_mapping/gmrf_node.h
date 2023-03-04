@@ -43,6 +43,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "olfaction_msgs/msg/gas_sensor.hpp"
+#include "olfaction_msgs/msg/observation.hpp"
 #include "gmrf_gas_mapping/gmrf_map.h"
 
 #include <boost/thread/mutex.hpp>
@@ -72,7 +73,7 @@ public:
     nav_msgs::msg::OccupancyGrid             occupancyMap;       //Occupancy GridMap of the environment
 
     //Node Params
-    std::string                             sensor_topic;
+    std::string                             sensor_topic, observation_topic;
     std::string                             frame_id;
     std::string                             occupancy_map_topic;
     double                                  cell_size;
@@ -103,11 +104,13 @@ public:
 protected:
     //Subscriptions & Publishers
     rclcpp::Subscription<olfaction_msgs::msg::GasSensor>::SharedPtr sub_gas_sensor;
+    rclcpp::Subscription<olfaction_msgs::msg::Observation>::SharedPtr sub_observation;
     rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_map;
 
     //Callbacks
     void sensorCallback(const olfaction_msgs::msg::GasSensor::SharedPtr msg);
     void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+    void obsCallback(const olfaction_msgs::msg::Observation::SharedPtr msg);
 
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

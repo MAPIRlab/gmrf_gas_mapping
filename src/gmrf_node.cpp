@@ -29,7 +29,8 @@ Cgmrf::Cgmrf(): Node("GMRF_node")
     //-----------------------------    
     frame_id = this->declare_parameter<std::string>("frame_id", "map");
     occupancy_map_topic = this->declare_parameter<std::string>("occupancy_map_topic", "/map");
-    sensor_topic = this->declare_parameter<std::string>("sensor_topic", "/Mox01/Sensor_reading");
+    sensor_topic = this->declare_parameter<std::string>("sensor_topic", "/sensor_reading");
+    observation_topic = this->declare_parameter<std::string>("observation_topic", "/obs");
     output_csv_folder = this->declare_parameter<std::string>("output_csv_folder", "");
     exec_freq = this->declare_parameter<double>("exec_freq", 2.0);
     cell_size = this->declare_parameter<double>("cell_size", 0.5);
@@ -51,6 +52,7 @@ Cgmrf::Cgmrf(): Node("GMRF_node")
     // Subscriptions
     //----------------------------------
     sub_gas_sensor = this->create_subscription<olfaction_msgs::msg::GasSensor>(sensor_topic ,1, std::bind(&Cgmrf::sensorCallback, this, _1) );
+    sub_observation = this->create_subscription<olfaction_msgs::msg::Observation>(observation_topic ,100, std::bind(&Cgmrf::obsCallback, this, _1) );
     sub_occupancy_map = this->create_subscription<nav_msgs::msg::OccupancyGrid>(occupancy_map_topic,1, std::bind(&Cgmrf::mapCallback, this, _1) );
  
 
@@ -135,6 +137,28 @@ void Cgmrf::sensorCallback(const olfaction_msgs::msg::GasSensor::SharedPtr msg)
     }
 }
 
+
+void Cgmrf::obsCallback(const olfaction_msgs::msg::Observation::SharedPtr msg)
+{
+    if (module_init)
+    {
+        curr_reading = msg->gas;
+        //Current sensor pose
+        float x_pos = msg->position.x;
+        float y_pos = msg->position.y;
+
+        //Add new observation to the map
+        if (curr_reading <0 || curr_reading > 1)
+        {
+            RCLCPP_WARN(this->get_logger(), "[GMRF] Obs is out of bouns! %.2f [0,1]. Normalizing!", curr_reading);
+            curr_reading = 1.0;
+        }
+        mutex_nose.lock();
+        RCLCPP_INFO(this->get_logger(), "[GMRF] Got new Obs [x,y,ppm]=[%.2f, %.2f, %.2f]", x_pos, y_pos, curr_reading);
+        my_map->insertObservation_GMRF(curr_reading, x_pos, y_pos, GMRF_lambdaObs);
+        mutex_nose.unlock();
+    }
+}
 
 
 void Cgmrf::mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
